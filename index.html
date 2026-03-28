@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LuminaFrame Studio – Live Streaming, Photo & Video</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #E8C97A;
+      --gold-dim: #8A6E2F;
+      --dark: #0A0A08;
+      --dark-2: #111110;
+      --dark-3: #1A1A17;
+      --dark-4: #252520;
+      --cream: #F5F0E8;
+      --cream-dim: #CCC4B0;
+      --white: #FDFCF9;
+      --red-accent: #C44B2B;
+      --font-display: 'Cormorant Garamond', serif;
+      --font-ui: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--dark);
+      color: var(--cream);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+      cursor: none;
+    }
+    #root { min-height: 100vh; }
+
+    /* CUSTOM CURSOR */
+    .cursor-dot {
+      width: 8px; height: 8px;
+      background: var(--gold);
+      border-radius: 50%;
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.1s ease;
+    }
+    .cursor-ring {
+      width: 36px; height: 36px;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transition: transform 0.12s ease, width 0.2s, height 0.2s, opacity 0.2s;
+      opacity: 0.5;
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--dark-2); }
+    ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 1000;
+      padding: 0 4rem;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(10,10,8,0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 0.5px solid rgba(201,168,76,0.15);
+      transition: all 0.3s ease;
+    }
+    .nav-logo {
+      font-family: var(--font-ui);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 0.08em;
+      cursor: pointer;
+    }
+    .nav-logo span { color: var(--gold); }
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+      align-items: center;
+    }
+    .nav-links a {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.3s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0;
+      width: 0; height: 1px;
+      background: var(--gold);
+      transition: width 0.3s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--gold); }
+    .nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+    .nav-cta {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .nav-cta:hover { background: var(--gold); color: var(--dark); }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+    .hamburger span {
+      width: 24px; height: 1.5px;
+      background: var(--cream);
+      transition: all 0.3s;
+      display: block;
+    }
+
+    /* SECTIONS */
+    .page-section {
+      min-height: 100vh;
+      padding-top: 72px;
+    }
+    .section-hidden { display: none; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 8rem 5rem 6rem 6rem;
+      position: relative;
+      z-index: 2;
+    }
+    .hero-tag {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .hero-tag::before {
+      content: '';
+      display: block;
+      width: 32px; height: 1px;
+      background: var(--gold);
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(56px, 5.5vw, 84px);
+      font-weight: 300;
+      line-height: 1.05;
+      color: var(--white);
+      margin-bottom: 1.5rem;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--gold-light);
+    }
+    .hero-desc {
+      font-family: var(--font-body);
+      font-size: 16px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      max-width: 420px;
+      line-height: 1.8;
+      margin-bottom: 3rem;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 1.25rem;
+      align-items: center;
+    }
+    .btn-primary {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 14px 36px;
+      background: var(--gold);
+      color: var(--dark);
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-primary:hover { background: var(--gold-light); }
+    .btn-ghost {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: color 0.3s;
+    }
+    .btn-ghost:hover { color: var(--gold); }
+    .btn-ghost .arrow { font-size: 18px; }
+    .hero-stats {
+      display: flex;
+      gap: 3rem;
+      margin-top: 4rem;
+      padding-top: 2.5rem;
+      border-top: 0.5px solid rgba(201,168,76,0.2);
+    }
+    .stat-item {}
+    .stat-num {
+      font-family: var(--font-display);
+      font-size: 42px;
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1;
+    }
+    .stat-num span { color: var(--gold); font-size: 28px; }
+    .stat-label {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      letter-spacing: 0.05em;
+      margin-top: 4px;
+    }
+
+    .hero-right {
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-visual-grid {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 4px;
+    }
+    .hero-img-block {
+      background: var(--dark-3);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-img-block.tall { grid-row: span 2; }
+    .hero-img-inner {
+      position: absolute; inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold-dim);
+    }
+    .hero-img-icon { font-size: 40px; margin-bottom: 8px; opacity: 0.4; }
+    .hero-img-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.4;
+      color: var(--cream-dim);
+    }
+    /* Cinematic overlay */
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to right, var(--dark) 0%, transparent 40%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Live badge */
+    .live-badge {
+      position: absolute;
+      top: 24px; right: 24px;
+      z-index: 3;
+      background: var(--red-accent);
+      color: white;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .live-dot {
+      width: 6px; height: 6px;
+      background: white;
+      border-radius: 50%;
+      animation: pulse-live 1.2s infinite;
+    }
+    @keyframes pulse-live {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* ── SECTION HEADER ── */
+    .sec-header {
+      text-align: center;
+      margin-bottom: 5rem;
+    }
+    .sec-tag {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .sec-tag::before, .sec-tag::after {
+      content: '';
+      display: block;
+      width: 40px; height: 0.5px;
+      background: var(--gold-dim);
+    }
+    .sec-title {
+      font-family: var(--font-display);
+      font-size: clamp(38px, 4vw, 60px);
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 1.2rem;
+    }
+    .sec-title em { font-style: italic; color: var(--gold-light); }
+    .sec-desc {
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+
+    /* ── LAYANAN PAGE ── */
+    .page-layanan {
+      padding: 6rem 6rem 8rem;
+    }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5px;
+      background: rgba(201,168,76,0.1);
+    }
+    .service-card {
+      background: var(--dark-2);
+      padding: 3.5rem 2.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.4s;
+    }
+    .service-card:hover { background: var(--dark-3); }
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 2px;
+      background: var(--gold);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+    .service-card:hover::before { transform: scaleX(1); }
+    .svc-number {
+      font-family: var(--font-display);
+      font-size: 72px;
+      font-weight: 300;
+      color: rgba(201,168,76,0.08);
+      line-height: 1;
+      margin-bottom: 1.5rem;
+      transition: color 0.4s;
+    }
+    .service-card:hover .svc-number { color: rgba(201,168,76,0.15); }
+    .svc-icon {
+      width: 52px; height: 52px;
+      border: 1px solid rgba(201,168,76,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin-bottom: 1.5rem;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .service-card:hover .svc-icon {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.08);
+    }
+    .svc-name {
+      font-family: var(--font-ui);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.02em;
+    }
+    .svc-desc {
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.8;
+      margin-bottom: 2rem;
+    }
+    .svc-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .svc-features li {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--cream-dim);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .svc-features li::before {
+      content: '—';
+      color: var(--gold-dim);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .svc-price-tag {
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 0.5px solid rgba(201,168,76,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .svc-from {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+    }
+    .svc-price {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 300;
+      color: var(--gold-light);
+    }
+    .paket-section {
+      margin-top: 6rem;
+    }
+    .paket-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 4rem;
+    }
+    .paket-card {
+      border: 0.5px solid rgba(201,168,76,0.2);
+      padding: 2.5rem;
+      position: relative;
+      transition: border-color 0.3s;
+    }
+    .paket-card:hover { border-color: rgba(201,168,76,0.5); }
+    .paket-card.featured {
+      border-color: var(--gold);
+      background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, transparent 100%);
+    }
+    .featured-badge {
+      position: absolute;
+      top: -1px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--gold);
+      color: var(--dark);
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 5px 18px;
+    }
+    .paket-name {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+    }
+    .paket-price {
+      font-family: var(--font-display);
+      font-size: 48px;
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1;
+      margin: 0.75rem 0;
+    }
+    .paket-price small {
+      font-size: 18px;
+      color: var(--cream-dim);
+    }
+    .paket-tagline {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 0.5px solid rgba(201,168,76,0.1);
+    }
+    .paket-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 2rem;
+    }
+    .paket-list li {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      display: flex;
+      gap: 10px;
+    }
+    .paket-list li .check { color: var(--gold); font-size: 14px; }
+
+    /* ── ARTIKEL PAGE ── */
+    .page-artikel { padding: 6rem 6rem 8rem; }
+    .artikel-hero-card {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 0.5px solid rgba(201,168,76,0.2);
+      margin-bottom: 3rem;
+      overflow: hidden;
+    }
+    .artikel-hero-img {
+      background: var(--dark-3);
+      min-height: 420px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 60px;
+      color: rgba(201,168,76,0.2);
+      position: relative;
+    }
+    .artikel-hero-img .cat-pill {
+      position: absolute; top: 20px; left: 20px;
+      background: var(--gold);
+      color: var(--dark);
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+    }
+    .artikel-hero-content {
+      padding: 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .artikel-meta {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      letter-spacing: 0.08em;
+      margin-bottom: 1rem;
+    }
+    .artikel-title-big {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .artikel-title-big em { font-style: italic; color: var(--gold-light); }
+    .artikel-excerpt {
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.8;
+      margin-bottom: 1.5rem;
+    }
+    .btn-read {
+      align-self: flex-start;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: gap 0.3s;
+    }
+    .btn-read:hover { gap: 14px; }
+    .artikel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .artikel-card {
+      border: 0.5px solid rgba(201,168,76,0.15);
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .artikel-card:hover { border-color: rgba(201,168,76,0.4); }
+    .artikel-card-img {
+      height: 200px;
+      background: var(--dark-3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px;
+      color: rgba(201,168,76,0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .artikel-card-img .cat-pill {
+      position: absolute; top: 12px; left: 12px;
+      font-family: var(--font-ui);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      background: rgba(201,168,76,0.15);
+      color: var(--gold);
+      border: 0.5px solid rgba(201,168,76,0.3);
+    }
+    .artikel-card-body { padding: 1.5rem; }
+    .artikel-card-meta {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      margin-bottom: 0.75rem;
+    }
+    .artikel-card-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1.3;
+      margin-bottom: 0.75rem;
+    }
+    .artikel-card-excerpt {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.7;
+    }
+
+    /* ── PORTFOLIO PAGE ── */
+    .page-portfolio { padding: 6rem 6rem 8rem; }
+    .portfolio-filter {
+      display: flex;
+      gap: 0;
+      margin-bottom: 3rem;
+      border: 0.5px solid rgba(201,168,76,0.2);
+      overflow: hidden;
+      width: fit-content;
+    }
+    .filter-btn {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 12px 24px;
+      background: transparent;
+      color: var(--cream-dim);
+      border: none;
+      border-right: 0.5px solid rgba(201,168,76,0.2);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .filter-btn:last-child { border-right: none; }
+    .filter-btn.active { background: var(--gold); color: var(--dark); }
+    .filter-btn:hover:not(.active) { background: rgba(201,168,76,0.08); color: var(--gold); }
+    .portfolio-masonry {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+    }
+    .porto-item {
+      background: var(--dark-3);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .porto-item:nth-child(1) { grid-row: span 2; }
+    .porto-item:nth-child(5) { grid-column: span 2; }
+    .porto-visual {
+      height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      color: rgba(201,168,76,0.12);
+      position: relative;
+    }
+    .porto-item:nth-child(1) .porto-visual,
+    .porto-item:nth-child(5) .porto-visual { height: 380px; }
+    .porto-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(10,10,8,0.95) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.4s;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1.5rem;
+    }
+    .porto-item:hover .porto-overlay { opacity: 1; }
+    .porto-cat {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .porto-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1.3;
+    }
+    .porto-detail {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      margin-top: 4px;
+    }
+    /* Pattern backgrounds for portfolio items */
+    .porto-pattern-1 { background: repeating-linear-gradient(45deg, #1A1A17, #1A1A17 2px, #111 2px, #111 8px); }
+    .porto-pattern-2 { background: radial-gradient(circle at 30% 40%, #1e1a10 0%, #0a0a08 60%); }
+    .porto-pattern-3 { background: repeating-linear-gradient(0deg, #1A1A17, #1A1A17 2px, #141412 2px, #141412 12px); }
+    .porto-pattern-4 { background: repeating-linear-gradient(90deg, #1A1A17, #1A1A17 2px, #0f0f0d 2px, #0f0f0d 10px); }
+    .porto-pattern-5 { background: radial-gradient(ellipse at 70% 60%, #1a150a 0%, #0a0a08 70%); }
+    .porto-pattern-6 { background: repeating-conic-gradient(#1a1a17 0%, #1a1a17 25%, #111 0%, #111 50%) 0 0/16px 16px; }
+
+    /* ── TENTANG PAGE ── */
+    .page-tentang { padding: 6rem 6rem 8rem; }
+    .tentang-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6rem;
+      align-items: center;
+      margin-bottom: 7rem;
+    }
+    .tentang-visual {
+      position: relative;
+    }
+    .tentang-img-main {
+      background: var(--dark-3);
+      height: 560px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      color: rgba(201,168,76,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .tentang-img-badge {
+      position: absolute;
+      bottom: 32px; right: -24px;
+      background: var(--dark-2);
+      border: 1px solid var(--gold);
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+      z-index: 2;
+    }
+    .badge-num {
+      font-family: var(--font-display);
+      font-size: 40px;
+      font-weight: 300;
+      color: var(--gold-light);
+      line-height: 1;
+    }
+    .badge-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+    }
+    .tentang-accent-box {
+      position: absolute;
+      top: 32px; left: -16px;
+      background: var(--gold);
+      padding: 0.75rem 1.25rem;
+      z-index: 2;
+    }
+    .accent-text {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--dark);
+    }
+    .tentang-content {}
+    .tentang-story {
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.9;
+      margin-bottom: 1.25rem;
+    }
+    .tentang-story strong {
+      color: var(--cream);
+      font-weight: 400;
+    }
+    .tentang-quote {
+      border-left: 2px solid var(--gold);
+      padding-left: 1.5rem;
+      margin: 2rem 0;
+    }
+    .tentang-quote p {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 300;
+      font-style: italic;
+      color: var(--white);
+      line-height: 1.5;
+    }
+    .tentang-quote cite {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--gold-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 8px;
+      font-style: normal;
+    }
+    .team-section { margin-top: 3rem; }
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      margin-top: 4rem;
+    }
+    .team-card {
+      text-align: center;
+    }
+    .team-avatar {
+      width: 100%;
+      padding-bottom: 100%;
+      background: var(--dark-3);
+      position: relative;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .team-avatar-inner {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px;
+      color: rgba(201,168,76,0.15);
+    }
+    .team-name {
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+    .team-role {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+    .team-social { color: var(--cream-dim); font-size: 13px; }
+    .values-section {
+      margin-top: 6rem;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5px;
+      background: rgba(201,168,76,0.1);
+    }
+    .value-item {
+      background: var(--dark-2);
+      padding: 2.5rem 2rem;
+      text-align: center;
+    }
+    .value-icon { font-size: 36px; margin-bottom: 1rem; }
+    .value-name {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 0.5rem;
+    }
+    .value-desc {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.7;
+    }
+
+    /* ── KONTAK PAGE ── */
+    .page-kontak { padding: 6rem 6rem 8rem; }
+    .kontak-grid {
+      display: grid;
+      grid-template-columns: 5fr 4fr;
+      gap: 4rem;
+    }
+    .form-group {
+      margin-bottom: 1.75rem;
+    }
+    .form-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      display: block;
+      margin-bottom: 0.75rem;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: var(--dark-3);
+      border: 0.5px solid rgba(201,168,76,0.2);
+      color: var(--cream);
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 300;
+      padding: 14px 18px;
+      outline: none;
+      transition: border-color 0.3s;
+      -webkit-appearance: none;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--gold);
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color: rgba(204,196,176,0.35); }
+    .form-select { appearance: none; cursor: pointer; }
+    .form-textarea {
+      resize: vertical;
+      min-height: 140px;
+      line-height: 1.7;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .kontak-info {}
+    .info-item {
+      padding: 2rem 0;
+      border-bottom: 0.5px solid rgba(201,168,76,0.1);
+    }
+    .info-item:first-child { padding-top: 0; }
+    .info-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+    }
+    .info-value {
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--cream);
+      line-height: 1.6;
+    }
+    .info-value a { color: var(--cream); text-decoration: none; }
+    .social-links {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .social-link {
+      width: 44px; height: 44px;
+      border: 0.5px solid rgba(201,168,76,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      color: var(--cream-dim);
+      text-decoration: none;
+      transition: all 0.3s;
+      cursor: pointer;
+      background: none;
+    }
+    .social-link:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.06); }
+    .map-box {
+      margin-top: 3rem;
+      height: 220px;
+      background: var(--dark-3);
+      border: 0.5px solid rgba(201,168,76,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      color: rgba(201,168,76,0.15);
+      position: relative;
+    }
+    .map-label {
+      position: absolute;
+      bottom: 16px; left: 16px;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--dark-2);
+      border-top: 0.5px solid rgba(201,168,76,0.12);
+      padding: 3rem 6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-logo {
+      font-family: var(--font-ui);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 0.08em;
+    }
+    .footer-logo span { color: var(--gold); }
+    .footer-copy {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--cream-dim);
+    }
+    .footer-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .footer-links a {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    .footer-links a:hover { color: var(--gold); }
+
+    /* ── TOAST NOTIF ── */
+    .toast {
+      position: fixed;
+      bottom: 32px; right: 32px;
+      background: var(--gold);
+      color: var(--dark);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding: 14px 24px;
+      z-index: 9999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Decorative line */
+    .deco-line {
+      width: 60px; height: 0.5px;
+      background: var(--gold-dim);
+      margin: 0 auto 1.5rem;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      nav { padding: 0 2rem; }
+      .nav-links, .nav-cta { display: none; }
+      .hamburger { display: flex; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-left { padding: 5rem 2rem 4rem; }
+      .hero-right { display: none; }
+      .page-layanan, .page-artikel, .page-portfolio, .page-tentang, .page-kontak {
+        padding: 4rem 2rem 6rem;
+      }
+      .services-grid, .paket-grid { grid-template-columns: 1fr; }
+      .artikel-hero-card { grid-template-columns: 1fr; }
+      .artikel-grid { grid-template-columns: 1fr 1fr; }
+      .portfolio-masonry { grid-template-columns: 1fr 1fr; }
+      .porto-item:nth-child(1) { grid-row: span 1; }
+      .porto-item:nth-child(5) { grid-column: span 1; }
+      .tentang-grid { grid-template-columns: 1fr; gap: 3rem; }
+      .tentang-img-badge { right: 16px; }
+      .team-grid { grid-template-columns: 1fr 1fr; }
+      .values-section { grid-template-columns: 1fr 1fr; }
+      .kontak-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 1rem; text-align: center; padding: 2rem; }
+      .footer-links { justify-content: center; }
+    }
+
+    /* Fade-in animation */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeInUp 0.6s ease forwards; }
+    .fade-in-delay-1 { animation-delay: 0.1s; }
+    .fade-in-delay-2 { animation-delay: 0.2s; }
+    .fade-in-delay-3 { animation-delay: 0.3s; }
+    .fade-in-delay-4 { animation-delay: 0.4s; }
+
+    /* Grid lines decorative bg */
+    .grid-bg {
+      background-image: 
+        linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+        linear-gradient(to right, rgba(201,168,76,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+// ── DATA ──────────────────────────────────────────────────────────
+const services = [
+  {
+    num: '01',
+    icon: '📡',
+    name: 'Live Streaming',
+    desc: 'Siaran langsung berkualitas sinematik untuk acara pernikahan, konser, seminar, dan peluncuran produk dengan multi-platform distribution.',
+    features: [
+      'Multi-platform: YouTube, Instagram, Facebook Live',
+      'Resolusi hingga 4K 60fps',
+      'Crew profesional 4–8 orang',
+      'Grafis & lower-third custom',
+      'Monitoring stream real-time',
+    ],
+    price: 'Rp 3.500.000'
+  },
+  {
+    num: '02',
+    icon: '📷',
+    name: 'Fotografi',
+    desc: 'Abadikan momen berharga dengan sentuhan artistik. Dari foto pernikahan, prewedding, event korporat hingga produk komersial.',
+    features: [
+      'Fotografi pernikahan & prewedding',
+      'Event & korporat',
+      'Produk & komersial',
+      'Editing profesional Lightroom',
+      'Delivery 7–14 hari kerja',
+    ],
+    price: 'Rp 2.000.000'
+  },
+  {
+    num: '03',
+    icon: '🎬',
+    name: 'Videografi',
+    desc: 'Produksi video sinematik penuh emosi yang bercerita. Wedding film, dokumenter korporat, hingga video promosi yang memukau.',
+    features: [
+      'Wedding cinematography 4K',
+      'Drone aerial footage',
+      'Color grading sinematik',
+      'Musik & sound design',
+      'Full cinematic edit + teaser',
+    ],
+    price: 'Rp 4.500.000'
+  },
+];
+
+const pakets = [
+  {
+    name: 'Silver',
+    price: '5 Juta',
+    tagline: 'Paket terjangkau untuk kebutuhan dokumentasi dasar',
+    list: ['1 Fotografer', '1 Videografer', 'Live Stream 1 Platform', 'Editing standar', '200 foto digital', 'Video highlight 3–5 menit'],
+    featured: false,
+  },
+  {
+    name: 'Gold',
+    price: '12 Juta',
+    tagline: 'Pilihan terbaik untuk acara menengah & pernikahan',
+    list: ['2 Fotografer', '2 Videografer', 'Live Stream 3 Platform', 'Drone footage', 'Grafis custom', 'Video feature 8–12 menit', '500 foto digital', 'Wedding album premium'],
+    featured: true,
+  },
+  {
+    name: 'Platinum',
+    price: 'Custom',
+    tagline: 'Paket premium tanpa batas untuk acara prestisius',
+    list: ['Full Tim (6–8 Orang)', 'Multi-kamera 4K', 'Studio Broadcast Mobile', 'Livestream Unlimited Platform', 'Same-day edit highlight', 'Drone & gimbal', 'Photo album luxury', 'BTS dokumentasi'],
+    featured: false,
+  },
+];
+
+const artikels = [
+  { id: 1, cat: 'Live Streaming', title: 'Panduan Memilih Platform Livestream Terbaik untuk Acara Pernikahan', excerpt: 'Setiap platform memiliki keunggulan berbeda. Kami membedah fitur YouTube Live, Instagram Live, dan Zoom Webinar untuk menemukan yang paling tepat untuk pernikahan impian Anda.', date: '15 Maret 2025', read: '5 mnt', icon: '📡', featured: true },
+  { id: 2, cat: 'Videografi', title: 'Teknik Color Grading Sinematik untuk Wedding Film yang Emosional', excerpt: 'Warna yang tepat bisa membuat penonton merasakan kehangatan dan kebahagiaan hari spesial Anda. Pelajari teknik LUT dan grading yang kami gunakan.', date: '2 Maret 2025', read: '7 mnt', icon: '🎬', featured: false },
+  { id: 3, cat: 'Fotografi', title: 'Tips Foto Prewedding Outdoor di Jogja: Lokasi & Waktu Terbaik', excerpt: 'Jogja menyimpan sudut-sudut indah yang sempurna untuk foto prewedding. Berikut rekomendasi lokasi dan golden hour terbaik versi LuminaFrame.', date: '22 Feb 2025', read: '6 mnt', icon: '📷', featured: false },
+  { id: 4, cat: 'Tips & Trik', title: '8 Pertanyaan Wajib Sebelum Booking Vendor Multimedia', excerpt: 'Jangan sampai menyesal! Pastikan Anda menanyakan hal-hal penting ini kepada vendor multimedia sebelum menandatangani kontrak.', date: '10 Feb 2025', read: '4 mnt', icon: '💡', featured: false },
+  { id: 5, cat: 'Live Streaming', title: 'Mengenal Peralatan Livestream Profesional: Dari Encoder hingga CDN', excerpt: 'Bagi yang penasaran bagaimana kami menghasilkan siaran berkualitas tinggi, artikel ini membahas gear dan infrastruktur yang kami gunakan.', date: '1 Feb 2025', read: '8 mnt', icon: '🎙️', featured: false },
+  { id: 6, cat: 'Behind the Scene', title: 'Di Balik Layar: Produksi Wedding Film 48 Jam', excerpt: 'Dari pukul 5 subuh hingga tengah malam, begini kisah tim kami mengabadikan hari pernikahan yang tak terlupakan dalam kondisi apapun.', date: '20 Jan 2025', read: '10 mnt', icon: '🎭', featured: false },
+];
+
+const portfolioItems = [
+  { cat: 'Pernikahan', title: 'Wedding Cinematic Prambanan', detail: 'Pernikahan Adat Jawa · 2024', icon: '💍', pattern: 'porto-pattern-1' },
+  { cat: 'Live Streaming', title: 'Peluncuran Produk FMCG', detail: 'Korporat · Jakarta, 2024', icon: '📡', pattern: 'porto-pattern-2' },
+  { cat: 'Fotografi', title: 'Prewedding Tebing Breksi', detail: 'Outdoor · Jogja, 2024', icon: '📷', pattern: 'porto-pattern-3' },
+  { cat: 'Videografi', title: 'Dokumenter Budaya Keraton', detail: 'Film Pendek · 2024', icon: '🎬', pattern: 'porto-pattern-4' },
+  { cat: 'Konser', title: 'Live Concert "Nada Nusantara"', detail: 'Multi-kamera · 5000 viewers', icon: '🎶', pattern: 'porto-pattern-5' },
+  { cat: 'Korporat', title: 'Annual Meeting PT Maju Bersama', detail: 'Hybrid Event · 2024', icon: '🏢', pattern: 'porto-pattern-6' },
+];
+
+const teamMembers = [
+  { name: 'Reza Mahendra', role: 'Founder & Director', icon: '👤' },
+  { name: 'Dian Pratiwi', role: 'Lead Photographer', icon: '📷' },
+  { name: 'Arif Nugroho', role: 'Cinematographer', icon: '🎬' },
+  { name: 'Sari Dewi', role: 'Streaming Engineer', icon: '📡' },
+];
+
+const filterCats = ['Semua', 'Pernikahan', 'Live Streaming', 'Fotografi', 'Videografi', 'Konser', 'Korporat'];
+
+// ── COMPONENTS ────────────────────────────────────────────────────
+function SectionHero({ goTo }) {
+  return (
+    <section className="hero grid-bg fade-in">
+      <div className="hero-left">
+        <div className="hero-tag fade-in fade-in-delay-1">Multimedia Production Studio</div>
+        <h1 className="hero-title fade-in fade-in-delay-2">
+          Kami Abadikan<br/>Momen<br/><em>Terbaik Anda</em>
+        </h1>
+        <p className="hero-desc fade-in fade-in-delay-3">
+          LuminaFrame Studio — vendor multimedia profesional Jogja untuk live streaming, fotografi sinematik, dan videografi yang menggerakkan hati.
+        </p>
+        <div className="hero-actions fade-in fade-in-delay-4">
+          <button className="btn-primary" onClick={() => goTo('kontak')}>Konsultasi Gratis</button>
+          <button className="btn-ghost" onClick={() => goTo('portfolio')}>
+            <span>Lihat Karya</span>
+            <span className="arrow">→</span>
+          </button>
+        </div>
+        <div className="hero-stats fade-in fade-in-delay-4">
+          <div className="stat-item">
+            <div className="stat-num">500<span>+</span></div>
+            <div className="stat-label">Proyek selesai</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-num">7<span>+</span></div>
+            <div className="stat-label">Tahun pengalaman</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-num">98<span>%</span></div>
+            <div className="stat-label">Kepuasan klien</div>
+          </div>
+        </div>
+      </div>
+      <div className="hero-right">
+        <div className="live-badge"><div className="live-dot"></div> LIVE NOW</div>
+        <div className="hero-visual-grid">
+          <div className="hero-img-block tall porto-pattern-2">
+            <div className="hero-img-inner">
+              <div className="hero-img-icon">📡</div>
+              <div className="hero-img-label">Live Streaming</div>
+            </div>
+          </div>
+          <div className="hero-img-block porto-pattern-3">
+            <div className="hero-img-inner">
+              <div className="hero-img-icon">📷</div>
+              <div className="hero-img-label">Photography</div>
+            </div>
+          </div>
+          <div className="hero-img-block porto-pattern-5">
+            <div className="hero-img-inner">
+              <div className="hero-img-icon">🎬</div>
+              <div className="hero-img-label">Cinematography</div>
+            </div>
+          </div>
+        </div>
+        <div className="hero-overlay"></div>
+      </div>
+    </section>
+  );
+}
+
+function PageLayanan({ goTo }) {
+  return (
+    <div className="page-section page-layanan fade-in">
+      <div className="sec-header">
+        <div className="sec-tag">Apa yang kami tawarkan</div>
+        <h2 className="sec-title">Layanan <em>Multimedia</em> Kami</h2>
+        <p className="sec-desc">Dari siaran langsung yang memukau hingga film sinematik yang mengharukan — kami hadir untuk setiap momen berharga Anda.</p>
+      </div>
+
+      <div className="services-grid">
+        {services.map((s) => (
+          <div className="service-card" key={s.num}>
+            <div className="svc-number">{s.num}</div>
+            <div className="svc-icon">{s.icon}</div>
+            <div className="svc-name">{s.name}</div>
+            <div className="svc-desc">{s.desc}</div>
+            <ul className="svc-features">
+              {s.features.map((f, i) => <li key={i}>{f}</li>)}
+            </ul>
+            <div className="svc-price-tag">
+              <span className="svc-from">Mulai dari</span>
+              <span className="svc-price">{s.price}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="paket-section">
+        <div className="sec-header" style={{marginBottom: '0'}}>
+          <div className="sec-tag">Harga Transparan</div>
+          <h2 className="sec-title">Pilih <em>Paket</em> Anda</h2>
+          <p className="sec-desc">Semua paket sudah termasuk peralatan profesional, transportasi area Jogja, dan revisi editing.</p>
+        </div>
+        <div className="paket-grid">
+          {pakets.map((p) => (
+            <div className={`paket-card ${p.featured ? 'featured' : ''}`} key={p.name}>
+              {p.featured && <div className="featured-badge">Paling Populer</div>}
+              <div className="paket-name">{p.name}</div>
+              <div className="paket-price">
+                {p.name === 'Platinum' ? <span style={{fontSize:'28px', color:'var(--gold-light)'}}>Hubungi Kami</span> : <><small>Rp </small>{p.price}</>}
+              </div>
+              <div className="paket-tagline">{p.tagline}</div>
+              <ul className="paket-list">
+                {p.list.map((item, i) => (
+                  <li key={i}><span className="check">✦</span>{item}</li>
+                ))}
+              </ul>
+              <button className="btn-primary" style={{width:'100%'}} onClick={() => goTo('kontak')}>
+                {p.name === 'Platinum' ? 'Diskusi Paket' : 'Pesan Sekarang'}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PageArtikel() {
+  const featured = artikels.find(a => a.featured);
+  const rest = artikels.filter(a => !a.featured);
+  return (
+    <div className="page-section page-artikel fade-in">
+      <div className="sec-header">
+        <div className="sec-tag">Wawasan & Inspirasi</div>
+        <h2 className="sec-title">Artikel & <em>Cerita</em></h2>
+        <p className="sec-desc">Tips multimedia, behind the scene, dan insight industri langsung dari tim LuminaFrame Studio.</p>
+      </div>
+
+      {featured && (
+        <div className="artikel-hero-card">
+          <div className="artikel-hero-img">
+            <span className="cat-pill">{featured.cat}</span>
+            <span style={{fontSize:'72px', opacity:0.15}}>{featured.icon}</span>
+          </div>
+          <div className="artikel-hero-content">
+            <div className="artikel-meta">{featured.date} · {featured.read} baca</div>
+            <h3 className="artikel-title-big">{featured.title.split(' ').slice(0,4).join(' ')} <em>{featured.title.split(' ').slice(4).join(' ')}</em></h3>
+            <p className="artikel-excerpt">{featured.excerpt}</p>
+            <button className="btn-read">Baca Selengkapnya <span>→</span></button>
+          </div>
+        </div>
+      )}
+
+      <div className="artikel-grid">
+        {rest.map(a => (
+          <div className="artikel-card" key={a.id}>
+            <div className="artikel-card-img">
+              <span className="cat-pill">{a.cat}</span>
+              <span style={{fontSize:'44px',opacity:0.15}}>{a.icon}</span>
+            </div>
+            <div className="artikel-card-body">
+              <div className="artikel-card-meta">{a.date} · {a.read} baca</div>
+              <div className="artikel-card-title">{a.title}</div>
+              <div className="artikel-card-excerpt">{a.excerpt.substring(0, 100)}...</div>
+              <button className="btn-read" style={{marginTop:'1rem'}}>Baca <span>→</span></button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PagePortfolio() {
+  const [activeFilter, setActiveFilter] = useState('Semua');
+  const filtered = activeFilter === 'Semua'
+    ? portfolioItems
+    : portfolioItems.filter(p => p.cat === activeFilter);
+
+  return (
+    <div className="page-section page-portfolio fade-in">
+      <div className="sec-header">
+        <div className="sec-tag">Hasil Karya Kami</div>
+        <h2 className="sec-title">Portofolio <em>Pilihan</em></h2>
+        <p className="sec-desc">Setiap karya adalah cerita. Setiap momen adalah kenangan yang kami rawat dengan sepenuh hati.</p>
+      </div>
+
+      <div className="portfolio-filter">
+        {filterCats.map(f => (
+          <button
+            key={f}
+            className={`filter-btn ${activeFilter === f ? 'active' : ''}`}
+            onClick={() => setActiveFilter(f)}
+          >{f}</button>
+        ))}
+      </div>
+
+      <div className="portfolio-masonry">
+        {(filtered.length > 0 ? filtered : portfolioItems).map((item, i) => (
+          <div className={`porto-item ${item.pattern}`} key={i}>
+            <div className="porto-visual">
+              <span style={{fontSize:'52px', opacity:0.1}}>{item.icon}</span>
+              <div className="porto-overlay">
+                <div className="porto-cat">{item.cat}</div>
+                <div className="porto-title">{item.title}</div>
+                <div className="porto-detail">{item.detail}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PageTentang() {
+  return (
+    <div className="page-section page-tentang fade-in">
+      <div className="tentang-grid">
+        <div className="tentang-visual">
+          <div className="tentang-accent-box">
+            <div className="accent-text">Est. 2017 · Yogyakarta</div>
+          </div>
+          <div className="tentang-img-main porto-pattern-2">
+            <span style={{fontSize:'80px',opacity:0.08}}>🎬</span>
+          </div>
+          <div className="tentang-img-badge">
+            <div className="badge-num">500<span style={{fontSize:'20px',color:'var(--gold)'}}>+</span></div>
+            <div className="badge-label">Proyek Sukses</div>
+          </div>
+        </div>
+        <div className="tentang-content">
+          <div className="sec-tag" style={{justifyContent:'flex-start'}}>Tentang Kami</div>
+          <h2 className="sec-title" style={{textAlign:'left',fontSize:'clamp(32px,3.5vw,52px)'}}>Kami Percaya<br/><em>Setiap Momen</em><br/>Layak Diabadikan</h2>
+          <p className="tentang-story">
+            <strong>LuminaFrame Studio</strong> lahir dari kecintaan mendalam terhadap seni visual dan teknologi. Didirikan pada 2017 di Yogyakarta, kami telah menemani ratusan klien dalam mengabadikan momen terpenting dalam hidup mereka.
+          </p>
+          <p className="tentang-story">
+            Dengan tim berpengalaman yang terdiri dari fotografer, videografer, dan streaming engineer, kami menggabungkan <strong>estetika sinematik</strong> dengan <strong>keandalan teknologi terkini</strong> untuk menghasilkan karya yang tak tertandingi.
+          </p>
+          <div className="tentang-quote">
+            <p>"Kami bukan sekadar merekam — kami bercerita melalui cahaya dan gambar."</p>
+            <cite>— Reza Mahendra, Founder LuminaFrame Studio</cite>
+          </div>
+          <p className="tentang-story">
+            Berbasis di Jogja, kami melayani seluruh wilayah Jawa dan sekitarnya. Kepercayaan klien adalah prioritas utama kami, dan itu tercermin dalam setiap detail karya yang kami hasilkan.
+          </p>
+        </div>
+      </div>
+
+      <div className="team-section">
+        <div className="sec-header">
+          <div className="sec-tag">Tim Profesional</div>
+          <h2 className="sec-title">Orang-orang di Balik <em>Lensa</em></h2>
+        </div>
+        <div className="team-grid">
+          {teamMembers.map((m, i) => (
+            <div className="team-card" key={i}>
+              <div className="team-avatar">
+                <div className="team-avatar-inner">{m.icon}</div>
+              </div>
+              <div className="team-name">{m.name}</div>
+              <div className="team-role">{m.role}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="values-section" style={{marginTop:'5rem'}}>
+        {[
+          { icon: '🏆', name: 'Kualitas Premium', desc: 'Standar profesional di setiap aspek produksi kami.' },
+          { icon: '⏰', name: 'Tepat Waktu', desc: 'Deliveri hasil tepat sesuai jadwal yang disepakati.' },
+          { icon: '💬', name: 'Komunikatif', desc: 'Tim kami selalu responsif dan terbuka untuk diskusi.' },
+          { icon: '✨', name: 'Kreatif', desc: 'Pendekatan artistik unik untuk setiap proyek.' },
+        ].map((v, i) => (
+          <div className="value-item" key={i}>
+            <div className="value-icon">{v.icon}</div>
+            <div className="value-name">{v.name}</div>
+            <div className="value-desc">{v.desc}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PageKontak({ showToast }) {
+  const [form, setForm] = useState({ nama: '', email: '', telepon: '', layanan: '', tanggal: '', pesan: '' });
+  const handleChange = (e) => setForm({...form, [e.target.name]: e.target.value});
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    showToast('Pesan terkirim! Kami akan menghubungi Anda segera. 🎬');
+    setForm({ nama: '', email: '', telepon: '', layanan: '', tanggal: '', pesan: '' });
+  };
+
+  return (
+    <div className="page-section page-kontak fade-in">
+      <div className="sec-header">
+        <div className="sec-tag">Hubungi Kami</div>
+        <h2 className="sec-title">Mari Wujudkan <em>Visi Anda</em></h2>
+        <p className="sec-desc">Ceritakan acara Anda dan kami akan merancang solusi multimedia terbaik bersama Anda.</p>
+      </div>
+
+      <div className="kontak-grid">
+        <div>
+          <form onSubmit={handleSubmit}>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Nama Lengkap</label>
+                <input className="form-input" name="nama" value={form.nama} onChange={handleChange} placeholder="Nama Anda" required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Nomor Telepon</label>
+                <input className="form-input" name="telepon" value={form.telepon} onChange={handleChange} placeholder="+62 812 xxxx xxxx" />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Alamat Email</label>
+              <input className="form-input" type="email" name="email" value={form.email} onChange={handleChange} placeholder="email@anda.com" required />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Layanan yang Dibutuhkan</label>
+                <select className="form-select" name="layanan" value={form.layanan} onChange={handleChange} style={{color: form.layanan ? 'var(--cream)' : 'rgba(204,196,176,0.35)'}}>
+                  <option value="" disabled>Pilih layanan</option>
+                  <option value="live">Live Streaming</option>
+                  <option value="foto">Fotografi</option>
+                  <option value="video">Videografi</option>
+                  <option value="paket">Paket Bundling</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Tanggal Acara</label>
+                <input className="form-input" type="date" name="tanggal" value={form.tanggal} onChange={handleChange} style={{colorScheme:'dark'}} />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Pesan</label>
+              <textarea className="form-textarea" name="pesan" value={form.pesan} onChange={handleChange} placeholder="Ceritakan detail acara Anda: lokasi, jumlah tamu, kebutuhan khusus..."></textarea>
+            </div>
+            <button type="submit" className="btn-primary" style={{width:'100%', padding:'16px'}}>
+              Kirim Pesan ✦
+            </button>
+          </form>
+        </div>
+
+        <div className="kontak-info">
+          <div className="info-item">
+            <div className="info-label">📍 Alamat Studio</div>
+            <div className="info-value">Jl. Magelang No. 47, Sleman,<br/>Daerah Istimewa Yogyakarta 55515</div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">📞 Telepon / WhatsApp</div>
+            <div className="info-value"><a href="tel:+6281234567890">+62 812-3456-7890</a></div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">📧 Email</div>
+            <div className="info-value"><a href="mailto:halo@luminaframe.id">halo@luminaframe.id</a></div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">⏰ Jam Operasional</div>
+            <div className="info-value">Senin – Sabtu<br/>09.00 – 18.00 WIB<br/><span style={{color:'var(--gold)',fontSize:'12px'}}>WhatsApp tersedia 24/7</span></div>
+          </div>
+
+          <div style={{marginTop:'1.5rem'}}>
+            <div className="info-label" style={{marginBottom:'1rem'}}>Ikuti Kami</div>
+            <div className="social-links">
+              {['📸','▶️','💼','🎵'].map((icon, i) => (
+                <button key={i} className="social-link">{icon}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="map-box">
+            <span>🗺️</span>
+            <div className="map-label">📍 Yogyakarta, Indonesia</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── MAIN APP ──────────────────────────────────────────────────────
+function App() {
+  const [activePage, setActivePage] = useState('home');
+  const [toast, setToast] = useState({ msg: '', show: false });
+  const [mobileMenu, setMobileMenu] = useState(false);
+
+  useEffect(() => {
+    const dot = document.getElementById('cursorDot');
+    const ring = document.getElementById('cursorRing');
+    let mouseX = 0, mouseY = 0;
+    const onMove = (e) => {
+      mouseX = e.clientX; mouseY = e.clientY;
+      dot.style.transform = `translate(${mouseX - 4}px, ${mouseY - 4}px)`;
+      ring.style.transform = `translate(${mouseX - 18}px, ${mouseY - 18}px)`;
+    };
+    document.addEventListener('mousemove', onMove);
+    return () => document.removeEventListener('mousemove', onMove);
+  }, []);
+
+  const goTo = (page) => {
+    setActivePage(page);
+    setMobileMenu(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const showToast = (msg) => {
+    setToast({ msg, show: true });
+    setTimeout(() => setToast(t => ({...t, show: false})), 3500);
+  };
+
+  const navItems = [
+    { id: 'layanan', label: 'Layanan' },
+    { id: 'artikel', label: 'Artikel' },
+    { id: 'portfolio', label: 'Portfolio' },
+    { id: 'tentang', label: 'Tentang' },
+  ];
+
+  return (
+    <>
+      <nav>
+        <div className="nav-logo" onClick={() => goTo('home')}>
+          LUMINA<span>FRAME</span>
+        </div>
+        <ul className="nav-links">
+          {navItems.map(n => (
+            <li key={n.id}>
+              <a className={activePage === n.id ? 'active' : ''} onClick={() => goTo(n.id)}>{n.label}</a>
+            </li>
+          ))}
+        </ul>
+        <button className="nav-cta" onClick={() => goTo('kontak')}>Hubungi Kami</button>
+        <button className="hamburger" onClick={() => setMobileMenu(!mobileMenu)}>
+          <span></span><span></span><span></span>
+        </button>
+      </nav>
+
+      {mobileMenu && (
+        <div style={{
+          position:'fixed', top:'72px', left:0, right:0, zIndex:999,
+          background:'var(--dark-2)', borderBottom:'0.5px solid rgba(201,168,76,0.15)',
+          padding:'1.5rem 2rem', display:'flex', flexDirection:'column', gap:'0'
+        }}>
+          {[...navItems, {id:'kontak', label:'Kontak'}].map(n => (
+            <button key={n.id} onClick={() => goTo(n.id)} style={{
+              background:'none', border:'none', borderBottom:'0.5px solid rgba(201,168,76,0.08)',
+              padding:'1rem 0', textAlign:'left', color: activePage === n.id ? 'var(--gold)' : 'var(--cream)',
+              fontFamily:'var(--font-ui)', fontSize:'14px', fontWeight:'500',
+              letterSpacing:'0.1em', textTransform:'uppercase', cursor:'pointer'
+            }}>{n.label}</button>
+          ))}
+        </div>
+      )}
+
+      <main>
+        {activePage === 'home' && <SectionHero goTo={goTo} />}
+        {activePage === 'layanan' && <PageLayanan goTo={goTo} />}
+        {activePage === 'artikel' && <PageArtikel />}
+        {activePage === 'portfolio' && <PagePortfolio />}
+        {activePage === 'tentang' && <PageTentang />}
+        {activePage === 'kontak' && <PageKontak showToast={showToast} />}
+      </main>
+
+      <footer>
+        <div className="footer-logo">LUMINA<span>FRAME</span></div>
+        <p className="footer-copy">© 2025 LuminaFrame Studio · Yogyakarta</p>
+        <ul className="footer-links">
+          {navItems.map(n => (
+            <li key={n.id}><a onClick={() => goTo(n.id)}>{n.label}</a></li>
+          ))}
+          <li><a onClick={() => goTo('kontak')}>Kontak</a></li>
+        </ul>
+      </footer>
+
+      <div className={`toast ${toast.show ? 'show' : ''}`}>{toast.msg}</div>
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
